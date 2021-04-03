@@ -11,52 +11,103 @@ metadata:
     pgo-version: {{ .Chart.AppVersion | quote }}
     pgouser: admin
   name: {{ .Values.name | quote }}
-  namespace: {{ .Values.namespace | quote }}
+  namespace: {{ .Release.Namespace }}
 spec:
+  {{- $storage          := default dict .Values.storage }}
+  {{- $backrestStorage  := default dict $storage.backrest }}
   BackrestStorage:
     accessmode: ReadWriteOnce
-    size: {{ .Values.diskSize | default "2Gi" | quote }}
+    size: {{ $backrestStorage.size | default "2Gi" | quote }}
     storagetype: dynamic
+    storageclass: {{ $backrestStorage.storageclass | quote }}
+  {{- $primaryStorage  := default dict $storage.primary }}
   PrimaryStorage:
     accessmode: ReadWriteOnce
     name: {{ .Values.name | quote }}
-    size: {{ .Values.diskSize | default "1Gi" | quote }}
+    size: {{ $primaryStorage.size| default "1Gi" | quote }}
     storagetype: dynamic
+    storageclass: {{ $primaryStorage.storageclass | quote }}
+  {{- $replicaStorage  := default dict $storage.replica }}
   ReplicaStorage:
     accessmode: ReadWriteOnce
-    size: {{ .Values.diskSize | default "1Gi" | quote }}
+    size: {{ $replicaStorage.size| default "1Gi" | quote }}
     storagetype: dynamic
+    storageclass: {{ $replicaStorage.storageclass | quote }}
   ccpimage: {{ .Values.image | default "crunchy-postgres-ha" | quote }}
-  ccpimageprefix: {{ .Values.imagePrefix | default "registry.developers.crunchydata.com/crunchydata" | quote }}
-  ccpimagetag: {{ .Values.imageTag | default "centos8-13.2-4.6.2" | quote }}
+  ccpimageprefix: {{ .Values.imagePrefix | quote }}
+  ccpimagetag: {{ .Values.imageTag | quote }}
+  {{- if .Values.customConfig }}
+  customconfig: "{{ .Values.name }}-custom-config"
+  {{- end }}
   clustername: {{ .Values.name | quote }}
-  database: {{ .Values.name | quote }}
+  database: {{ .Values.database | quote }}
   {{- if .Values.monitoring }}
-  exporter: true
+  exporter: {{ .Values.monitoring.enabled }}
+  {{- if .Values.monitoring.limits }}
+  exporterLimits: {{- toYaml .Values.monitoring.limits | nindent 4 }}
+  {{- end -}}
+  {{- if .Values.monitoring.resources }}
+  exporterResources: {{- toYaml .Values.monitoring.resources | nindent 4 }}
+  {{- end }}
   {{- end }}
   exporterport: "9187"
-  limits:
-    cpu: {{ .Values.cpu | default "0.25" | quote }}
-    memory: {{ .Values.memory | default "1Gi" | quote }}
+  {{- if .Values.limits }}
+  limits: {{- toYaml .Values.limits | nindent 4 }}
+  {{- end -}}
+  {{- if .Values.resources }}
+  resources: {{- toYaml .Values.resources | nindent 4 }}
+  {{- end }}
+  {{- if .Values.nodeAffinity }}
+  nodeAffinity:
+    default: {{- toYaml .Values.nodeAffinity | nindent 6 }}
+  {{- end }}
   name: {{ .Values.name | quote }}
-  namespace: {{ .Values.namespace | quote }}
+  namespace: {{ .Release.Namespace | quote }}
   pgDataSource:
-    restoreFrom: ""
-    restoreOpts: ""
+    restoreFrom: {{ .Values.restoreFrom | quote }}
+    restoreOpts: {{ .Values.restoreOpts | quote }}
+  pgBadger: {{ .Values.pgBadger }}
   pgbadgerport: "10000"
-  pgoimageprefix: {{ .Values.imagePrefix | default "registry.developers.crunchydata.com/crunchydata" | quote }}
+  pgoimageprefix: {{ .Values.imagePrefix | quote }}
   podAntiAffinity:
     default: preferred
     pgBackRest: preferred
     pgBouncer: preferred
   port: "5432"
   {{- if .Values.ha }}
-  replicas: "1"
+  replicas: {{ .Values.replicas | default "1" | quote }}
+  {{- else }}
+  replicas: "0"
   {{- end }}
+  syncReplication: {{ .Values.syncReplication }}
   {{- if .Values.username }}
   user: {{ .Values.username | quote }}
   {{- else }}
   user: {{ .Values.name | quote }}
-  {{ end }}
+  {{- end }}
   userlabels:
     pgo-version: {{ .Chart.AppVersion | quote }}
+  {{- if .Values.backrest.enabled }}
+  backrestStorageTypes: {{- toYaml .Values.backrest.storageTypes | nindent 2 }}
+  backrestS3Bucket: {{ .Values.backrest.s3Bucket | quote }}
+  backrestS3Endpoint: {{ .Values.backrest.s3Endpoint | quote }}
+  backrestS3Region: {{ .Values.backrest.s3Region | quote }}
+  backrestS3URIStyle: {{ .Values.backrest.s3UriStyle | quote }}
+  backrestS3VerifyTLS: {{ .Values.backrest.s3VerifyTls | quote }}
+  {{- if .Values.monitoring.limits }}
+  backrestLimits: {{- toYaml .Values.backrest.limits | nindent 4 }}
+  {{- end -}}
+  {{- if .Values.monitoring.resources }}
+  backrestResources: {{- toYaml .Values.backrest.resources | nindent 4 }}
+  {{- end }}
+  {{- end -}}
+  {{- if .Values.pgBouncer }}
+  pgBouncer:
+    replicas: {{ .Values.pgBouncer.replicas | default 0 }}
+    {{- if .Values.pgBouncer.limits }}
+    limits: {{- toYaml .Values.pgBouncer.limits | nindent 6 }}
+    {{- end -}}
+    {{- if .Values.pgBouncer.resources }}
+    resources: {{- toYaml .Values.pgBouncer.resources | nindent 6 }}
+    {{- end }}
+  {{- end }}

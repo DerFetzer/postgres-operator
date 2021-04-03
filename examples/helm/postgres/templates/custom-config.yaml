@@ -1,0 +1,12 @@
+{{- if .Values.customConfig -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    pg-cluster: {{ .Values.name | quote }}
+    vendor: crunchydata
+  name: {{ .Values.name }}-custom-config
+  namespace: {{ .Release.Namespace }}
+data:
+  postgres-ha.yaml: {{- toYaml .Values.customConfig | indent 2 }}
+{{- end -}}

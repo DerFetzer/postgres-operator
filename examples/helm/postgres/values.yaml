@@ -1,14 +1,92 @@
-# The values is for the namespace and the postgresql cluster name
+# The value name is for the postgresql cluster name
 name: hippo
-namespace: pgo
-password: W4tch0ut4hippo$
+username: hippo
+database: hippo
+password: W4tch0ut4hippos
 
-# Optional parameters
-# cpu: 0.25
-# diskSize: 5Gi
-# monitoring: true
-# ha: true
-# imagePrefix: registry.developers.crunchydata.com/crunchydata
-# image: crunchy-postgres-ha
-# imageTag: centos8-13.2-4.6.2
-# memory: 1Gi
+storage:
+  backrest:
+    size: 2Gi
+    storageclass:
+  primary:
+    size: 1Gi
+    storageclass:
+  replica:
+    size: 1Gi
+    storageclass:
+
+restoreFrom: ""
+restoreOpts: ""
+
+ha: true
+replicas: 1
+
+syncReplication: false
+
+# customConfig: |-
+#   ---
+#   bootstrap:
+#     dcs:
+#       postgresql:
+#         parameters:
+#           max_connections: 30
+#           shared_buffers: 256MB
+
+resources:
+  # cpu: 0.25
+  memory: 128Mi
+limits: {}
+  # cpu: 0.25
+  # memory: 1Gi
+
+# nodeAffinity:
+#   requiredDuringSchedulingIgnoredDuringExecution:
+#         nodeSelectorTerms:
+#         - matchExpressions:
+#           - key: server-type
+#             operator: In
+#             values:
+#             - rs
+
+monitoring:
+  enabled: true
+  resources:
+    # cpu: 0.25
+    memory: 24Mi
+  limits: {}
+    # cpu: 0.25
+    # memory: 24Mi
+
+pgBadger: false
+
+backrest:
+  enabled: false
+  storageTypes:
+    - s3
+    - posix
+  s3Key: ""
+  s3Secret: ""
+  s3Bucket: ""
+  s3Endpoint: ""
+  s3Region: ""
+  s3UriStyle: ""
+  s3VerifyTls: true
+  resources:
+    # cpu: 0.25
+    memory: 48Mi
+  limits: {}
+    # cpu: 0.25
+    # memory: 48Mi
+
+pgBouncer:
+  replicas: 0
+  resources:
+    # cpu: 0.25
+    memory: 24Mi
+  limits: {}
+    # cpu: 0.25
+    # memory: 24Mi
+
+imagePrefix: registry.developers.crunchydata.com/crunchydata
+image: crunchy-postgres-ha
+imageTag: centos8-13.2-4.6.2

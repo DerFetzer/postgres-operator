@@ -39,15 +39,15 @@ following credentials:
 To connect to your PostgreSQL cluster, you can set up a port forward to your
 local machine in a separate terminal window:
 
-    kubectl -n {{ .Values.namespace }} port-forward svc/{{ .Values.name }} 5432:5432
+    kubectl -n {{ .Release.Namespace }} port-forward svc/{{ .Values.name }} 5432:5432
 
 And use the following connection string to connect to your cluster:
 
-    PGPASSWORD="{{ .Values.password }}" psql -h localhost -U {{ if .Values.username }}{{ .Values.username }}{{- else }}{{ .Values.name }}{{- end }} {{ .Values.name }}
+    PGPASSWORD="{{ .Values.password }}" psql -h localhost -U {{ if .Values.username }}{{ .Values.username }}{{- else }}{{ .Values.name }}{{- end }} {{ .Values.database }}
 
 If you need to log in as the PostgreSQL superuser, you can do so with the following command:
 
-    PGPASSWORD=$(kubectl -n jkatz get secrets {{ .Values.name }}-postgres-secret -o jsonpath='{.data.password}' | base64 -d) psql -h localhost -U postgres {{ .Values.name }}
+    PGPASSWORD=$(kubectl -n {{ .Release.Namespace }} get secrets {{ .Values.name }}-postgres-secret -o jsonpath='{.data.password}' | base64 -d) psql -h localhost -U postgres {{ .Values.database }}
 
 More information about the custom resource workflow the docs can be found here:
 
